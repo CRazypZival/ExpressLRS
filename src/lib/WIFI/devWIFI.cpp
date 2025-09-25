@@ -892,10 +892,41 @@ static void HandleContinuousWave(AsyncWebServerRequest *request) {
     POWERMGNT::init();
     POWERMGNT::setPower(POWERMGNT::getMinPower());
 
+    // 计次循环选择频率：每次调用自动切换到下一个频率
+    static int cwCallCount = 0;  // 静态变量，断电后自动重置为0
+    cwCallCount++;  // 每次调用递增
+    
+    uint32_t cwFreq;
+    const char* freqName;
+    
+    // 根据调用次数循环选择频率 (1→2→3→1→2→3...)
+    int freqIndex = ((cwCallCount - 1) % 3) + 1;  // 计算当前应该使用的频率索引
+    
+    switch (freqIndex) {
+      case 1:
+        cwFreq = 2400400000;  // 2400.4 MHz
+        freqName = "2400.4 MHz";
+        break;
+      case 2:
+        cwFreq = 2440000000;  // 2440.0 MHz
+        freqName = "2440.0 MHz";
+        break;
+      case 3:
+        cwFreq = 2479400000;  // 2479.4 MHz
+        freqName = "2479.4 MHz";
+        break;
+      default:
+        cwFreq = 2400400000;  // 默认频率
+        freqName = "2400.4 MHz";
+        break;
+    }
+    
+    DBGLN("CW: Call #%d, Selected frequency %s (%u Hz)", cwCallCount, freqName, cwFreq);
+
 #if defined(RADIO_LR1121)
-    Radio.startCWTest(setSubGHz ? FHSSconfig->freq_center : FHSSconfigDualBand->freq_center, radio);
+    Radio.startCWTest(setSubGHz ? cwFreq : FHSSconfigDualBand->freq_center, radio);
 #else
-    Radio.startCWTest(FHSSconfig->freq_center, radio);
+    Radio.startCWTest(cwFreq, radio);
 #if defined(RADIO_SX127X)
     deferExecutionMillis(50, [radio](){ Radio.cwRepeat(radio); });
 #endif

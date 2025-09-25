@@ -55,7 +55,16 @@
 				</div>
 @@end
 				<br>
-				<button id="start-cw" class="mui-btn mui-btn--primary" disabled>Start Continuous Wave</button>
+				<div style="margin-bottom: 15px; padding: 10px; background-color: #e8f4fd; border-radius: 5px; border-left: 4px solid #2196F3;">
+					<strong>自动循环模式：</strong>每次点击按钮会自动切换到下一个频率<br>
+					第1次调用 → 2400.4 MHz | 第2次调用 → 2440.0 MHz | 第3次调用 → 2479.4 MHz<br>
+					然后循环重复...
+				</div>
+				<button id="start-cw" class="mui-btn mui-btn--primary" style="height: 50px; font-size: 16px;" disabled>开始连续波测试 (自动循环)</button>
+				<br><br>
+				<div id="current-freq" style="padding: 15px; background-color: #f0f0f0; border-radius: 5px; font-weight: bold; text-align: center;">
+					Status: <span id="freq-display">Ready - 点击按钮开始自动循环测试</span>
+				</div>
 			</form>
 			<br>
 			<div class="mui-textfield">

@@ -10,6 +10,7 @@ var cwFreq = 2440000000;
 var xtalNominal = 52000000;
 var warn_offset;
 var bad_offset;
+var currentCallCount = 0;  // 前端计数器，仅用于显示
 
 function updateParams(data) {
   cwFreq = data.center;
@@ -33,6 +34,11 @@ function updateParams(data) {
 @@end
   _('frequency').textContent = (cwFreq / 1000000).toString();
   _('start-cw').disabled = false;
+  
+  // 更新状态显示
+  if (_('freq-display')) {
+    _('freq-display').textContent = 'Ready - 点击按钮开始自动循环测试';
+  }
 }
 
 function init() {
@@ -58,12 +64,58 @@ function init() {
 _('start-cw').onclick = (e) => {
   e.stopPropagation();
   e.preventDefault();
+  
+  // 更新前端计数器和显示
+  currentCallCount++;
+  const freqIndex = ((currentCallCount - 1) % 3) + 1;
+  let nextFreqName, nextFreqValue;
+  
+  switch (freqIndex) {
+    case 1:
+      nextFreqName = '2400.4 MHz';
+      nextFreqValue = 2400400000;
+      break;
+    case 2:
+      nextFreqName = '2440.0 MHz'; 
+      nextFreqValue = 2440000000;
+      break;
+    case 3:
+      nextFreqName = '2479.4 MHz';
+      nextFreqValue = 2479400000;
+      break;
+  }
+  
+  // 更新显示
+  _('frequency').textContent = (nextFreqValue / 1000000).toString();
+  if (_('freq-display')) {
+    _('freq-display').textContent = `第${currentCallCount}次调用 - 正在输出 ${nextFreqName}`;
+  }
+  
+  console.log(`CW Call #${currentCallCount}: Selected ${nextFreqName} (${nextFreqValue} Hz)`);
+  
   _('start-cw').disabled = true;
   _('optionsRadios1').disabled = true;
   _('optionsRadios2').disabled = true;
+  
   const xmlhttp = new XMLHttpRequest();
   xmlhttp.open('POST', '/cw', true);
-  xmlhttp.onreadystatechange = function() {};
+  xmlhttp.onreadystatechange = function() {
+    if (this.readyState === 4) {
+      // 1秒后重新启用按钮
+      setTimeout(() => {
+        _('start-cw').disabled = false;
+        _('optionsRadios1').disabled = false;
+        _('optionsRadios2').disabled = false;
+@@if chip == 'LR1121':
+        _('optionsSetSubGHz').disabled = false;
+@@end
+        if (_('freq-display')) {
+          _('freq-display').textContent = `已启动 ${nextFreqName} - 可点击按钮进行下一次测试`;
+        }
+      }, 1000);
+    }
+  };
+  
   const formdata = new FormData;
   formdata.append('radio', _('optionsRadios1').checked ? 1 : 2);
 @@if chip == 'LR1121':
