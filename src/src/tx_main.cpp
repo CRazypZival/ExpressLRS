@@ -30,6 +30,7 @@
 #define USBSerial Serial
 #endif
 
+extern void setWifiUpdateMode();
 //// CONSTANTS ////
 #define MSP_PACKET_SEND_INTERVAL 10LU
 
@@ -1469,6 +1470,8 @@ void setup()
     config.SetMotionMode(0); // Ensure motion detection is off
     UARTconnected();
   }
+
+  setWifiUpdateMode();
 }
 
 void loop()
