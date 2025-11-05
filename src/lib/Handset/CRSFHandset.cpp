@@ -313,6 +313,30 @@ void CRSFHandset::RcPacketToChannelsData() // data is packed as 11 bits per chan
         devicesTriggerEvent();
         #endif
     }
+
+    // 输出第7个通道的数据（索引为6）
+    static uint32_t prev_Channel6 = 0;
+    static uint32_t prev_Channel7 = 0;
+    
+    // 只在通道5的值发生变化时输出，或每100次输出一次当前值
+    if (prev_Channel6 != ChannelData[5])
+    {
+        DBGLN("CH6 Value: %u (Raw: 0x%03X, Percent: %d%%)", 
+              ChannelData[5], 
+              ChannelData[5], 
+              (ChannelData[5] - 172) * 100 / 1639);  // 转换为百分比 (172-1811范围 -> 0-100%)
+        prev_Channel6 = ChannelData[5];
+    }
+
+    // 只在通道7的值发生变化时输出，或每100次输出一次当前值
+    if (prev_Channel7 != ChannelData[6])
+    {
+        DBGLN("CH7 Value: %u (Raw: 0x%03X, Percent: %d%%)", 
+              ChannelData[6], 
+              ChannelData[6], 
+              (ChannelData[6] - 172) * 100 / 1639);  // 转换为百分比 (172-1811范围 -> 0-100%)
+        prev_Channel7 = ChannelData[6];
+    }
 }
 
 bool CRSFHandset::processInternalCrsfPackage(uint8_t *package)

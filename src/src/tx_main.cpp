@@ -370,7 +370,13 @@ void SetRFLinkRate(uint8_t index) // Set speed of RF link
   FHSSusePrimaryFreqBand = !(ModParams->radio_type == RADIO_TYPE_LR1121_LORA_2G4) && !(ModParams->radio_type == RADIO_TYPE_LR1121_GFSK_2G4);
   FHSSuseDualBand = ModParams->radio_type == RADIO_TYPE_LR1121_LORA_DUAL;
 
-  Radio.Config(ModParams->bw, ModParams->sf, ModParams->cr, FHSSgetInitialFreq(),
+  // 动态频率模式：根据CH7通道值切换频率（默认2440MHz）
+  // 频率范围: 2400.4MHz / 2440.0MHz / 2479.4MHz
+  const uint32_t INITIAL_FREQ = FREQ_HZ_TO_REG_VAL(2440000000);
+  DBGLN("CH7-controlled frequency mode (default: 2440 MHz)");
+  DBGLN("CH7 ranges: <582=2400.4MHz, 582-1402=2440MHz, >1402=2479.4MHz");
+
+  Radio.Config(ModParams->bw, ModParams->sf, ModParams->cr, INITIAL_FREQ,
                ModParams->PreambleLen, invertIQ, ModParams->PayloadLength, ModParams->interval
 #if defined(RADIO_SX128X)
                , uidMacSeedGet(), OtaCrcInitializer, (ModParams->radio_type == RADIO_TYPE_SX128x_FLRC)
@@ -416,6 +422,11 @@ void SetRFLinkRate(uint8_t index) // Set speed of RF link
 
 void ICACHE_RAM_ATTR HandleFHSS()
 {
+  // 固定频率模式：不进行FHSS跳频，始终使用2440MHz
+  // FHSS已禁用，频率固定在2440MHz，无需跳频操作
+  // 注释掉原有的跳频逻辑
+  
+  /*
   uint8_t modresult = (OtaNonce + 1) % ExpressLRS_currAirRate_Modparams->FHSShopInterval;
   // If the next packet should be on the next FHSS frequency, do the hop
   if (!InBindingMode && modresult == 0)
@@ -442,6 +453,7 @@ void ICACHE_RAM_ATTR HandleFHSS()
       Radio.SetFrequencyReg(FHSSgetNextFreq());
     }
   }
+  */
 }
 
 void ICACHE_RAM_ATTR HandlePrepareForTLM()
@@ -495,8 +507,56 @@ void injectBackpackPanTiltRollData(uint32_t const now)
 #endif
 }
 
+// 根据CH7通道值选择频率
+static uint32_t currentTxFreq = FREQ_HZ_TO_REG_VAL(2440000000); // 默认2440MHz
+static uint32_t lastCH7Value = 992; // 上次的CH7值
+
+void ICACHE_RAM_ATTR UpdateFrequencyBasedOnCH7()
+{
+  // 读取CH7通道值（索引为6）
+  uint32_t ch7 = ChannelData[6];
+  
+  // 定义频率阈值（使用中点作为阈值）
+  // 172-582: 2400.4MHz
+  // 582-1402: 2440.0MHz  
+  // 1402-1811: 2479.4MHz
+  const uint32_t THRESHOLD_LOW = 582;   // (172+992)/2
+  const uint32_t THRESHOLD_HIGH = 1402; // (992+1811)/2
+  
+  uint32_t targetFreq;
+  const char* freqName;
+  
+  if (ch7 < THRESHOLD_LOW)
+  {
+    targetFreq = FREQ_HZ_TO_REG_VAL(2404000000); // 2400.4 MHz
+    freqName = "2404 MHz";
+  }
+  else if (ch7 < THRESHOLD_HIGH)
+  {
+    targetFreq = FREQ_HZ_TO_REG_VAL(2440000000);  // 2440.0 MHz
+    freqName = "2440 MHz";
+  }
+  else
+  {
+    targetFreq = FREQ_HZ_TO_REG_VAL(2470000000);  // 2479.4 MHz
+    freqName = "2470 MHz";
+  }
+  
+  // 只在频率需要改变时才切换
+  if (targetFreq != currentTxFreq)
+  {
+    currentTxFreq = targetFreq;
+    Radio.SetFrequencyReg(targetFreq);
+    DBGLN("CH7=%u -> Switching to %s", ch7, freqName);
+  }
+  
+  lastCH7Value = ch7;
+}
+
 void ICACHE_RAM_ATTR SendRCdataToRF()
 {
+  // 根据CH7通道值更新发送频率
+  UpdateFrequencyBasedOnCH7();
   // Do not send a stale channels packet to the RX if one has not been received from the handset
   // *Do* send data if a packet has never been received from handset and the timer is running
   // this is the case when bench testing and TXing without a handset
@@ -637,10 +697,11 @@ void ICACHE_RAM_ATTR SendRCdataToRF()
 void ICACHE_RAM_ATTR nonceAdvance()
 {
   OtaNonce++;
-  if ((OtaNonce + 1) % ExpressLRS_currAirRate_Modparams->FHSShopInterval == 0)
-  {
-    ++FHSSptr;
-  }
+  // 固定频率模式：不递增FHSS指针，因为不需要跳频
+  // if ((OtaNonce + 1) % ExpressLRS_currAirRate_Modparams->FHSShopInterval == 0)
+  // {
+  //   ++FHSSptr;
+  // }
 }
 
 /*
@@ -1471,7 +1532,7 @@ void setup()
     UARTconnected();
   }
 
-  setWifiUpdateMode();
+  // setWifiUpdateMode();
 }
 
 void loop()
