@@ -886,6 +886,12 @@ static void HandleContinuousWave(AsyncWebServerRequest *request) {
     request->send(response);
     request->client()->close();
 
+    // 先停止之前的CW测试（如果有）
+    DBGLN("Stopping previous CW test...");
+    Radio.End();
+    delay(200); // 等待Radio完全停止和硬件稳定
+    
+    DBGLN("Reinitializing Radio...");
     Radio.TXdoneCallback = [](){};
     Radio.Begin(FHSSgetMinimumFreq(), FHSSgetMaximumFreq());
 
@@ -922,7 +928,11 @@ static void HandleContinuousWave(AsyncWebServerRequest *request) {
     }
     
     DBGLN("CW: Call #%d, Selected frequency %s (%u Hz)", cwCallCount, freqName, cwFreq);
-
+    
+    // 确保Radio处于待机模式后再启动CW测试
+    delay(50);
+    
+    DBGLN("Starting CW test at %s...", freqName);
 #if defined(RADIO_LR1121)
     Radio.startCWTest(setSubGHz ? cwFreq : FHSSconfigDualBand->freq_center, radio);
 #else
