@@ -371,7 +371,11 @@ void SetRFLinkRate(uint8_t index, bool bindMode) // Set speed of RF link
     FHSSusePrimaryFreqBand = !(ModParams->radio_type == RADIO_TYPE_LR1121_LORA_2G4) && !(ModParams->radio_type == RADIO_TYPE_LR1121_GFSK_2G4);
     FHSSuseDualBand = ModParams->radio_type == RADIO_TYPE_LR1121_LORA_DUAL;
 
-    Radio.Config(ModParams->bw, ModParams->sf, ModParams->cr, FHSSgetInitialFreq(),
+    // RX固定频率模式：始终使用2440MHz接收
+    const uint32_t FIXED_FREQ_2440MHZ = FREQ_HZ_TO_REG_VAL(2440000000);
+    DBGLN("RX: Fixed frequency mode at 2440 MHz (FHSS disabled)");
+
+    Radio.Config(ModParams->bw, ModParams->sf, ModParams->cr, FIXED_FREQ_2440MHZ,
                  ModParams->PreambleLen, invertIQ, ModParams->PayloadLength, 0
 #if defined(RADIO_SX128X)
                  , uidMacSeedGet(), OtaCrcInitializer, (ModParams->radio_type == RADIO_TYPE_SX128x_FLRC)
@@ -414,6 +418,11 @@ void SetRFLinkRate(uint8_t index, bool bindMode) // Set speed of RF link
 
 bool ICACHE_RAM_ATTR HandleFHSS()
 {
+    // RX固定频率模式：禁用FHSS跳频，始终保持在2440MHz
+    // 直接返回false，表示未进行跳频操作
+    return false;
+    
+    /* 原始FHSS跳频代码已禁用，用于固定频率接收
     uint8_t modresultFHSS = (OtaNonce + 1) % ExpressLRS_currAirRate_Modparams->FHSShopInterval;
 
     if ((ExpressLRS_currAirRate_Modparams->FHSShopInterval == 0) || alreadyFHSS == true || InBindingMode || (modresultFHSS != 0) || (connectionState == disconnected))
@@ -455,6 +464,7 @@ bool ICACHE_RAM_ATTR HandleFHSS()
     SetClearChannelAssessmentTime();
 #endif
     return true;
+    */
 }
 
 void ICACHE_RAM_ATTR LinkStatsToOta(OTA_LinkStats_s * const ls)
@@ -1184,6 +1194,19 @@ bool ICACHE_RAM_ATTR ProcessRFPacket(SX12xxDriverCommon::rx_status const status)
 
     // Received a packet, that's the definition of LQ
     LQCalc.add();
+    
+    // 打印RSSI、LQ、SNR信息（仅在连接已建立时）
+    static uint32_t printCount = 0;
+    if (connectionState == connected && (printCount++ % 100) == 0)
+    {
+        int8_t rssi1 = CRSF::LinkStatistics.uplink_RSSI_1;
+        int8_t rssi2 = CRSF::LinkStatistics.uplink_RSSI_2;
+        uint8_t lq = LQCalc.getLQ();
+        int8_t snr = CRSF::LinkStatistics.uplink_SNR;
+        
+        DBGLN("RX LinkStats: RSSI1=%d dBm, RSSI2=%d dBm, LQ=%u%%, SNR=%d dB", 
+              rssi1, rssi2, lq, snr);
+    }
     // Extend sync duration since we've received a packet at this rate
     // but do not extend it indefinitely
     RFmodeCycleMultiplier = RFmodeCycleMultiplierSlow;
@@ -2213,7 +2236,7 @@ void loop()
         DBGLN("Req air rate change %u->%u", ExpressLRS_currAirRate_Modparams->index, ExpressLRS_nextAirRateIndex);
         if (!isSupportedRFRate(ExpressLRS_nextAirRateIndex))
         {
-            DBGLN("Mode %u not supported, ignoring", get_elrs_airRateConfig(index)->interval);
+            DBGLN("Mode %u not supported, ignoring", ExpressLRS_nextAirRateIndex);
             ExpressLRS_nextAirRateIndex = ExpressLRS_currAirRate_Modparams->index;
         }
         LostConnection(true);
