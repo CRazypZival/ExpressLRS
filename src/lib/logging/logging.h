@@ -28,7 +28,14 @@
 #if defined(TARGET_TX)
 extern Stream *TxBackpack;
 #if defined(PLATFORM_ESP32_S3)
+// 对于ESP32-S3，使用USB CDC进行调试输出
+// 注意：需要在platformio.ini中设置 -D ARDUINO_USB_CDC_ON_BOOT=1
+#if defined(ARDUINO_USB_CDC_ON_BOOT)
+extern Stream *TxUSB;
+#define LOGGING_UART (*TxUSB)
+#else
 #define LOGGING_UART (Serial)
+#endif
 #else
 #define LOGGING_UART (*TxBackpack)
 #endif

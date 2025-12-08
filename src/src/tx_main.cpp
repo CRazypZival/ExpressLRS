@@ -26,6 +26,8 @@
 
 #include "MAVLink.h"
 
+#include "RC.h"
+
 #if defined(PLATFORM_ESP32_S3) || defined(PLATFORM_ESP32_C3)
 #include "USB.h"
 #define USBSerial Serial
