@@ -3,24 +3,24 @@
 
 // GPIO 引脚定义
 // AETR 通道 (副翼、升降、油门、方向)
-#define ROLL_ADC        13      // 副翼通道 ADC 引脚
-#define PITCH_ADC       14      // 升降通道 ADC 引脚
-#define THROTTLE_ADC    21      // 油门通道 ADC 引脚
-#define YAW_ADC         47      // 方向通道 ADC 引脚
+#define ROLL_ADC        5      // 副翼通道 ADC 引脚
+#define PITCH_ADC       6      // 升降通道 ADC 引脚
+#define THROTTLE_ADC    7      // 油门通道 ADC 引脚
+#define YAW_ADC         8      // 方向通道 ADC 引脚
 
 // 开关引脚定义
-#define SW5             45      // 开关5
-#define SW6_1           35      // 开关6位置1
-#define SW6_2           36      // 开关6位置2
-#define SW7_1           37      // 开关7位置1
-#define SW7_2           38      // 开关7位置2
-#define SW8             39      // 开关8
-#define SW9             37      // 开关9
-#define SLI10           38      // 滑动开关10
+#define SW5             17      // 开关5
+#define SW6_1           18      // 开关6位置1
+#define SW6_2           8      // 开关6位置2
+#define SW7_1           3      // 开关7位置1
+#define SW7_2           46      // 开关7位置2
+#define SW8             9      // 开关8
+#define SW9             10      // 开关9
+#define SLI10           16      // 滑动开关10
 
 // 电源控制引脚
-#define POWER_BTN       1       // 电源按钮
-#define POWER_EN        2       // 电源使能
+#define POWER_BTN       21       // 电源按钮
+#define POWER_EN        47       // 电源使能
 
 // RC通道数组 (10个通道)
 // CH1-4: 摇杆 (副翼、升降、油门、方向)

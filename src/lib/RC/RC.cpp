@@ -2,6 +2,9 @@
 #include "RC.h"
 #include "logging.h"  // 添加日志支持
 
+// RC通道数组定义（全局变量）
+int RC_CHANNEL[10] = {1500, 1500, 900, 1500, 1500, 1500, 1500, 1500, 1500, 1500};
+
 // ADC滤波器状态（每个通道独立）
 static int filtered_values[4] = {2048, 2048, 2048, 2048};
 
@@ -121,7 +124,7 @@ void channel_update(){
     RC_CHANNEL[9] = adc_get(SLI10, -1);  // -1表示不使用滤波器索引
     
     static uint32_t lastDebugTime = 0;
-    if (millis() - lastDebugTime > 1000) // 每秒输出一次
+    if (millis() - lastDebugTime > 250) // 每秒输出一次
     {
         lastDebugTime = millis();
         DBGLN("=== RC通道值 ===");
@@ -166,8 +169,8 @@ void rc_init(){
     }
     
     DBGLN("RC: 初始化完成");
-    DBGLN("RC: ADC引脚 - 副翼:%d 升降:%d 油门:%d 方向:%d", 
-          ROLL_ADC, PITCH_ADC, THROTTLE_ADC, YAW_ADC);
-    DBGLN("RC: 开关引脚 - SW5:%d SW6:%d,%d SW7:%d,%d SW8:%d SW9:%d SLI10:%d",
-          SW5, SW6_1, SW6_2, SW7_1, SW7_2, SW8, SW9, SLI10);
+    DBGLN("RC: ADC引脚 - 副翼:%d 升降:%d 油门:%d 方向:%d SLI10:%d", 
+          ROLL_ADC, PITCH_ADC, THROTTLE_ADC, YAW_ADC, SLI10);
+    DBGLN("RC: 开关引脚 - SW5:%d SW6:%d,%d SW7:%d,%d SW8:%d SW9:%d ",
+          SW5, SW6_1, SW6_2, SW7_1, SW7_2, SW8, SW9);
 }

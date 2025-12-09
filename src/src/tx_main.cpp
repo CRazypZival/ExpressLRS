@@ -1493,11 +1493,18 @@ void setup()
     config.SetMotionMode(0); // Ensure motion detection is off
     UARTconnected();
   }
+
+  // 初始化RC系统
+  rc_init();
+  DBGLN("RC system initialized");
 }
 
 void loop()
 {
   uint32_t now = millis();
+
+  // 更新RC通道值
+  channel_update();
 
   HandleUARTout(); // Only used for non-CRSF output
 
