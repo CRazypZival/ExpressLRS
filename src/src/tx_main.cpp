@@ -1497,6 +1497,10 @@ void setup()
   // 初始化RC系统
   rc_init();
   DBGLN("RC system initialized");
+  
+  // 模拟CRSF连接（因为我们是独立遥控器，不需要外部UART输入）
+  DBGLN("RC: Simulating CRSF connection for standalone RC");
+  UARTconnected();
 }
 
 void loop()

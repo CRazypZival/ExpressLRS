@@ -1,6 +1,13 @@
 #include <Arduino.h>
 #include "RC.h"
 #include "logging.h"  // 添加日志支持
+#include "crsf_protocol.h"  // 用于CRSF值转换
+
+// CRSF通道数量（ch0-ch15 = 16个通道）
+#define CRSF_NUM_CHANNELS 16
+
+// 外部声明ChannelData（定义在common.cpp中）
+extern uint32_t ChannelData[CRSF_NUM_CHANNELS];
 
 // RC通道数组定义（全局变量）
 int RC_CHANNEL[10] = {1500, 1500, 900, 1500, 1500, 1500, 1500, 1500, 1500, 1500};
@@ -123,6 +130,16 @@ void channel_update(){
     // CH10: 滑动开关/电位器
     RC_CHANNEL[9] = adc_get(SLI10, -1);  // -1表示不使用滤波器索引
     
+    // 将RC_CHANNEL值转换为CRSF格式并注入到ChannelData
+    // RC_CHANNEL范围: 900-2100 (标准PWM微秒值)
+    // ChannelData范围: CRSF_CHANNEL_VALUE_MIN (172) 到 CRSF_CHANNEL_VALUE_MAX (1811)
+    for (int i = 0; i < 10 && i < CRSF_NUM_CHANNELS; i++)
+    {
+        // 将900-2100映射到CRSF范围
+        ChannelData[i] = map(RC_CHANNEL[i], 900, 2100, 
+                            CRSF_CHANNEL_VALUE_MIN, CRSF_CHANNEL_VALUE_MAX);
+    }
+    
     static uint32_t lastDebugTime = 0;
     if (millis() - lastDebugTime > 250) // 每秒输出一次
     {
@@ -130,6 +147,8 @@ void channel_update(){
         DBGLN("=== RC通道值 ===");
         DBGLN("摇杆: 副翼=%d 升降=%d 油门=%d 方向=%d", 
               RC_CHANNEL[0], RC_CHANNEL[1], RC_CHANNEL[2], RC_CHANNEL[3]);
+        DBGLN("CRSF: CH1=%d CH2=%d CH3=%d CH4=%d",
+              ChannelData[0], ChannelData[1], ChannelData[2], ChannelData[3]);
         DBGLN("开关: CH5=%d CH6=%d CH7=%d CH8=%d CH9=%d CH10=%d",
               RC_CHANNEL[4], RC_CHANNEL[5], RC_CHANNEL[6], 
               RC_CHANNEL[7], RC_CHANNEL[8], RC_CHANNEL[9]);
@@ -166,6 +185,12 @@ void rc_init(){
     // 初始化通道值为中点
     for(int i = 0; i < 10; i++){
         RC_CHANNEL[i] = CHANNEL_MID;
+    }
+    
+    // 初始化ChannelData为CRSF中点值
+    for (int i = 0; i < CRSF_NUM_CHANNELS; i++)
+    {
+        ChannelData[i] = CRSF_CHANNEL_VALUE_MID;
     }
     
     DBGLN("RC: 初始化完成");
