@@ -67,9 +67,9 @@ int adc_get(int pin, int channel_index){
     
     // 应用死区并映射到输出范围
     int channel_value;
-    if (raw_value > mid + ADC_DEADZONE && raw_value <= max){
+    if (raw_value > mid + ADC_DEADZONE){
         channel_value = map(raw_value, mid + ADC_DEADZONE, max, CHANNEL_MID, CHANNEL_MAX);
-    } else if (raw_value < mid - ADC_DEADZONE && raw_value >= min){
+    } else if (raw_value < mid - ADC_DEADZONE){
         channel_value = map(raw_value, min, mid - ADC_DEADZONE, CHANNEL_MIN, CHANNEL_MID);
     } else{
         channel_value = CHANNEL_MID;
@@ -145,10 +145,14 @@ void channel_update(){
     {
         lastDebugTime = millis();
         DBGLN("=== RC通道值 ===");
+        DBGLN("ADC原始值: 副翼=%d 升降=%d 油门=%d 方向=%d SLI10=%d", 
+              analogRead(ROLL_ADC), analogRead(PITCH_ADC), analogRead(THROTTLE_ADC), 
+              analogRead(YAW_ADC), analogRead(SLI10));
+        
         DBGLN("摇杆: 副翼=%d 升降=%d 油门=%d 方向=%d", 
               RC_CHANNEL[0], RC_CHANNEL[1], RC_CHANNEL[2], RC_CHANNEL[3]);
-        DBGLN("CRSF: CH1=%d CH2=%d CH3=%d CH4=%d",
-              ChannelData[0], ChannelData[1], ChannelData[2], ChannelData[3]);
+        // DBGLN("CRSF: CH1=%d CH2=%d CH3=%d CH4=%d",
+        //       ChannelData[0], ChannelData[1], ChannelData[2], ChannelData[3]);
         DBGLN("开关: CH5=%d CH6=%d CH7=%d CH8=%d CH9=%d CH10=%d",
               RC_CHANNEL[4], RC_CHANNEL[5], RC_CHANNEL[6], 
               RC_CHANNEL[7], RC_CHANNEL[8], RC_CHANNEL[9]);
