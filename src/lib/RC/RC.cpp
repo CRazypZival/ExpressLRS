@@ -89,7 +89,7 @@ void channel_update(){
     RC_CHANNEL[3] = adc_get(YAW_ADC, 3);       // 方向
     
     // CH5: 两段开关
-    if (digitalRead(SW5) == HIGH){
+    if (digitalRead(SW5) == LOW){
         RC_CHANNEL[4] = CHANNEL_MAX;
     } else {
         RC_CHANNEL[4] = CHANNEL_MIN;
@@ -148,7 +148,7 @@ void channel_update(){
         DBGLN("ADC原始值: 副翼=%d 升降=%d 油门=%d 方向=%d SLI10=%d", 
               analogRead(ROLL_ADC), analogRead(PITCH_ADC), analogRead(THROTTLE_ADC), 
               analogRead(YAW_ADC), analogRead(SLI10));
-        
+        DBGLN("ADC原始值: JOYSTICK=%d", analogRead(10));
         DBGLN("摇杆: 副翼=%d 升降=%d 油门=%d 方向=%d", 
               RC_CHANNEL[0], RC_CHANNEL[1], RC_CHANNEL[2], RC_CHANNEL[3]);
         // DBGLN("CRSF: CH1=%d CH2=%d CH3=%d CH4=%d",

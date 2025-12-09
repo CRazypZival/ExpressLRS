@@ -3,13 +3,13 @@
 
 // GPIO 引脚定义
 // AETR 通道 (副翼、升降、油门、方向)
-#define ROLL_ADC        5      // 副翼通道 ADC 引脚
-#define PITCH_ADC       6      // 升降通道 ADC 引脚
-#define THROTTLE_ADC    7      // 油门通道 ADC 引脚
-#define YAW_ADC         15      // 方向通道 ADC 引脚
+#define ROLL_ADC        4      // 副翼通道 ADC 引脚
+#define PITCH_ADC       5      // 升降通道 ADC 引脚
+#define THROTTLE_ADC    6      // 油门通道 ADC 引脚
+#define YAW_ADC         7      // 方向通道 ADC 引脚
 
 // 开关引脚定义
-#define SW5             17      // 开关5
+#define SW5             15      // 开关5
 #define SW6_1           18      // 开关6位置1
 #define SW6_2           8      // 开关6位置2
 #define SW7_1           3      // 开关7位置1
