@@ -1,83 +1,15 @@
 #ifndef RC_H
 #define RC_H
 
-// ============================================================
-// RC 模式选择
-// ============================================================
-// 取消注释以下其中一行来选择模式:
-// DRONE_MODE: 无人机模式 - 带电机控制，使用特定引脚配置
-// RC_MODE: 遥控器模式 - 纯遥控器，使用不同引脚配置
-// ============================================================
-
-#define DRONE_MODE
-// #define RC_MODE
-
-// ============================================================
-// GPIO 引脚定义 - 根据模式自动选择
-// ============================================================
-
-#ifdef DRONE_MODE
-// ==================== 无人机模式引脚配置 ====================
-// 此模式下，摇杆ADC引脚避开电机驱动引脚 (GPIO 4,5,6,7)
-// AS5600与屏幕共享I2C总线 (GPIO 11, 12)
-
-// AETR 通道 (副翼、升降、油门、方向) - 摇杆ADC引脚
-#define ROLL_ADC        13     // 副翼通道 ADC 引脚
-#define PITCH_ADC       14     // 升降通道 ADC 引脚
-#define THROTTLE_ADC    21     // 油门通道 ADC 引脚
-#define YAW_ADC         47     // 方向通道 ADC 引脚
-
-// 开关引脚定义
-#define SW5             17     // 开关5 (两段)
-#define SW6_1           18     // 开关6位置1 (三段)
-#define SW6_2           8      // 开关6位置2 (三段)
-#define SW7_1           3      // 开关7位置1 (三段)
-#define SW7_2           46     // 开关7位置2 (三段)
-#define SW8             9      // 开关8 (两段)
-#define SW9             45     // 开关9 (两段)
-#define SLI10           35     // 滑动开关10 (电位器)
-
 // AS5600 磁编码器 I2C 引脚 - 与屏幕共享I2C总线
-#define AS5600_SCL      12     // 与屏幕共享 SCK
-#define AS5600_SDA      11     // 与屏幕共享 SDA
+#define AS5600_SCL      15     // 与屏幕共享 SCK
+#define AS5600_SDA      16     // 与屏幕共享 SDA
 
 // DRV8313 电机驱动引脚
-#define DRV8313_EN      4      // 使能引脚
-#define DRV8313_IN1     7      // PWM输入1
-#define DRV8313_IN2     6      // PWM输入2
-#define DRV8313_IN3     5      // PWM输入3
-
-// 电源控制引脚
-#define POWER_BTN       1      // 电源按钮
-#define POWER_EN        2      // 电源使能
-
-#endif // DRONE_MODE
-
-#ifdef RC_MODE
-// ==================== 遥控器模式引脚配置 ====================
-// 此模式下，无电机控制，摇杆可以使用更多GPIO
-
-// AETR 通道 (副翼、升降、油门、方向) - 摇杆ADC引脚
-#define ROLL_ADC        4      // 副翼通道 ADC 引脚
-#define PITCH_ADC       5      // 升降通道 ADC 引脚
-#define THROTTLE_ADC    6      // 油门通道 ADC 引脚
-#define YAW_ADC         7      // 方向通道 ADC 引脚
-
-// 开关引脚定义
-#define SW5             15     // 开关5 (两段)
-#define SW6_1           18     // 开关6位置1 (三段)
-#define SW6_2           8      // 开关6位置2 (三段)
-#define SW7_1           3      // 开关7位置1 (三段)
-#define SW7_2           46     // 开关7位置2 (三段)
-#define SW8             9      // 开关8 (两段)
-#define SW9             10     // 开关9 (两段)
-#define SLI10           16     // 滑动开关10 (电位器)
-
-// 电源控制引脚
-#define POWER_BTN       21     // 电源按钮
-#define POWER_EN        47     // 电源使能
-
-#endif // RC_MODE
+#define DRV8313_EN      4      // 使能引脚 (注意: 与ROLL_ADC共用GPIO4)
+#define DRV8313_IN1     7      // PWM输入1 (注意: 与YAW_ADC共用GPIO7)
+#define DRV8313_IN2     6      // PWM输入2 (注意: 与THROTTLE_ADC共用GPIO6)
+#define DRV8313_IN3     5      // PWM输入3 (注意: 与PITCH_ADC共用GPIO5)
 
 // ============================================================
 // 通用定义 (两种模式共用)
