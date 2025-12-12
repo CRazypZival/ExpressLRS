@@ -82,6 +82,8 @@ int adc_get(int pin, int channel_index){
  * @brief 更新所有RC通道值
  */
 void channel_update(){
+
+#ifdef DRONE_MODE
     // CH1-4: 摇杆ADC通道
     RC_CHANNEL[0] = adc_get(ROLL_ADC, 0);      // 副翼
     RC_CHANNEL[1] = adc_get(PITCH_ADC, 1);     // 升降
@@ -157,14 +159,19 @@ void channel_update(){
               RC_CHANNEL[4], RC_CHANNEL[5], RC_CHANNEL[6], 
               RC_CHANNEL[7], RC_CHANNEL[8], RC_CHANNEL[9]);
     }
+#endif
+#ifdef RC_MODE
+    
+#endif
 }
 
 /**
  * @brief 初始化RC系统
  */
 void rc_init(){
-    DBGLN("RC: 初始化RC系统...");
-    
+    // 输出当前模式
+#ifdef DRONE_MODE
+    DBGLN("RC: 初始化RC系统 [DRONE_MODE 无人机模式]");
     // 初始化ADC引脚
     pinMode(ROLL_ADC, INPUT);
     pinMode(PITCH_ADC, INPUT);
@@ -202,4 +209,8 @@ void rc_init(){
           ROLL_ADC, PITCH_ADC, THROTTLE_ADC, YAW_ADC, SLI10);
     DBGLN("RC: 开关引脚 - SW5:%d SW6:%d,%d SW7:%d,%d SW8:%d SW9:%d ",
           SW5, SW6_1, SW6_2, SW7_1, SW7_2, SW8, SW9);
+#endif
+#ifdef RC_MODE
+    DBGLN("RC: 初始化RC系统 [RC_MODE 遥控器模式]");
+#endif
 }
