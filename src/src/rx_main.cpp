@@ -213,6 +213,8 @@ bool alreadyTLMresp = false;
 ///////Variables for Telemetry and Link Quality///////////////
 uint32_t LastValidPacket = 0;           //Time the last valid packet was recv
 uint32_t LastSyncPacket = 0;            //Time the last valid packet was recv
+uint32_t DisconnectedTimeStart = 0;     //Time when disconnection started
+#define AUTO_BIND_TIMEOUT_MS 5000       //Auto enter binding mode after 5 seconds of disconnection
 
 static uint32_t SendLinkStatstoFCintervalLastSent;
 static uint8_t SendLinkStatstoFCForcedSends;
@@ -836,6 +838,12 @@ void LostConnection(bool resumeRx)
 {
     DBGLN("lost conn fc=%d fo=%d", FreqCorrection, hwTimer::getFreqOffset());
 
+    // Record the time when disconnection started for auto-bind feature
+    if (connectionState != disconnected)
+    {
+        DisconnectedTimeStart = millis();
+    }
+
     connectionState = disconnected; //set lost connection
     RXtimerState = tim_disconnected;
     hwTimer::resetFreqOffset();
@@ -895,6 +903,9 @@ void GotConnection(unsigned long now)
     {
         return; // Already connected
     }
+
+    // Reset disconnection timer when connected
+    DisconnectedTimeStart = 0;
 
     LockRFmode = firmwareOptions.lock_on_first_connection;
 
@@ -1848,6 +1859,15 @@ static void updateBindingMode(unsigned long now)
     else if (!UID_IS_BOUND(UID) && !InBindingMode)
     {
         DBGLN("RX has not been bound, enter binding mode");
+        EnterBindingMode();
+    }
+
+    // Auto enter binding mode after 5 seconds of disconnection
+    else if (!InBindingMode && connectionState == disconnected && 
+             DisconnectedTimeStart != 0 && (now - DisconnectedTimeStart) > AUTO_BIND_TIMEOUT_MS)
+    {
+        DBGLN("Auto entering binding mode after %dms disconnection", AUTO_BIND_TIMEOUT_MS);
+        DisconnectedTimeStart = 0; // Reset to prevent repeated triggers
         EnterBindingMode();
     }
 
