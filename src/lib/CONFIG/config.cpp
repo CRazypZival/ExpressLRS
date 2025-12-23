@@ -659,9 +659,10 @@ TxConfig::SetDefaults(bool commit)
         #elif defined(RADIO_LR1121)
             SetRate(enumRatetoIndex(POWER_OUTPUT_VALUES_COUNT == 0 ? RATE_LORA_250HZ : RATE_LORA_200HZ));
         #elif defined(RADIO_SX128X)
-            SetRate(enumRatetoIndex(RATE_LORA_250HZ));
+            SetRate(enumRatetoIndex(RATE_LORA_333HZ_8CH));
         #endif
         SetPower(POWERMGNT::getDefaultPower());
+        SetSwitchMode(sm12ch);  // Force Wide mode as default
 #if defined(PLATFORM_ESP32)
         // ESP32 nvs needs to commit every model
         if (commit)

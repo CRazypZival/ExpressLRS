@@ -10,6 +10,7 @@ import elrs_helpers
 import BFinitPassthrough
 import ETXinitPassthrough
 import UnifiedConfiguration
+import merge_bin_to_hex
 
 def add_target_uploadoption(name: str, desc: str) -> None:
     # Add an upload target 'uploadforce' that forces update if target mismatch
@@ -150,6 +151,8 @@ def copyBootApp0bin(source, target, env):
 
 if platform in ['espressif32']:
     env.AddPreAction("$BUILD_DIR/${PROGNAME}.bin", copyBootApp0bin)
+    # Add post-build action to merge bin files into hex
+    env.AddPostAction("$BUILD_DIR/${PROGNAME}.bin", merge_bin_to_hex.post_build_merge)
 
 if platform in ['espressif32', 'espressif8266']:
     if not os.path.exists('hardware'):
