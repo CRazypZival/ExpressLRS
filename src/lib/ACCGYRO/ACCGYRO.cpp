@@ -36,6 +36,9 @@ void ACCGYRO::begin() {
 void ACCGYRO::read() {
     mpu.getMotion6(&m_ax, &m_ay, &m_az, &m_gx, &m_gy, &m_gz);
 
+    // YAW轴补偿和反向处理（先补偿，再取反）
+    m_gz = -(m_gz - YAW_OFFSET_LSB);
+
     // 根据对齐角度进行坐标变换
     if (m_alignDeg != 0) {
         int16_t ax_temp = m_ax, ay_temp = m_ay, az_temp = m_az;
@@ -87,10 +90,10 @@ void ACCGYRO::posture() {
     }
     m_prevMicros = now;
 
-    // 将陀螺仪原始值转换为角速度（deg/s），并对YAW轴进行偏移补偿
+    // 将陀螺仪原始值转换为角速度（deg/s），YAW轴的补偿已在read()中处理
     float gxDeg = static_cast<float>(m_gx) / GYRO_SENS_500DPS;
     float gyDeg = static_cast<float>(m_gy) / GYRO_SENS_500DPS;
-    float gzDeg = static_cast<float>(m_gz - YAW_OFFSET_LSB) / GYRO_SENS_500DPS;
+    float gzDeg = static_cast<float>(m_gz) / GYRO_SENS_500DPS;
 
     // 积分陀螺仪角度
     m_rollDeg += gxDeg * dt;

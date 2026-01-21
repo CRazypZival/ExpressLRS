@@ -491,23 +491,17 @@ void injectBackpackPanTiltRollData(uint32_t const now)
 
 void ICACHE_RAM_ATTR SendRCdataToRF()
 {
-  // Do not send a stale channels packet to the RX if one has not been received from the handset
-  // *Do* send data if a packet has never been received from handset and the timer is running
-  // this is the case when bench testing and TXing without a handset
+  // 使用IMU数据而不是handset数据
+  // 总是发送通道数据，除非在特定的模式下
   bool dontSendChannelData = false;
-  uint32_t lastRcData = handset->GetRCdataLastRecv();
-  if (lastRcData && (micros() - lastRcData > 1000000))
+
+  // 在Mavlink模式下，如果没有有效的IMU数据，可以选择不发送
+  // 但目前我们总是发送IMU生成的通道数据
+  if (config.GetLinkMode() == TX_MAVLINK_MODE)
   {
-    // The tx is in Mavlink mode and without a valid crsf or RC input.  Do not send stale or fake zero packet RC!
-    // Only send sync and MSP packets.
-    if (config.GetLinkMode() == TX_MAVLINK_MODE)
-    {
-      dontSendChannelData = true;
-    }
-    else
-    {
-      return;
-    }
+    // 可以在这里添加Mavlink模式的特殊处理
+    // 目前保持原逻辑
+    dontSendChannelData = false;
   }
 
   busyTransmitting = true;
@@ -1505,6 +1499,8 @@ void loop()
   rc_gyro_fast_update();
   // 姿态打印（250ms）
   rc_gyro_slow_update(now);
+  // 更新通道数据（实时）
+  channel_update();
 
   HandleUARTout(); // Only used for non-CRSF output
 

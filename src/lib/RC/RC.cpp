@@ -6,14 +6,9 @@
 
 ACCGYRO accgyro;
 
-// CRSF通道数量（ch0-ch15 = 16个通道）
-#define CRSF_NUM_CHANNELS 16
-
 // 外部声明ChannelData（定义在common.cpp中）
 extern uint32_t ChannelData[CRSF_NUM_CHANNELS];
 
-// RC通道数组定义（全局变量）
-int RC_CHANNEL[10] = {1500, 1500, 900, 1500, 1500, 1500, 1500, 1500, 1500, 1500};
 
 void rc_init() {
     accgyro.begin();
@@ -26,39 +21,70 @@ void channel_update() {
     float pitch_val = accgyro.pitch();
     float yaw_val = accgyro.yaw();
 
-    // 映射函数：将角度值(-45~45)映射到RC通道值(900~2100)
-    auto map_angle_to_channel = [](float angle) -> int {
-        // 角度范围：-45 ~ +45
-        const float angle_min = -45.0f;
-        const float angle_max = 45.0f;
-        // 通道范围：900 ~ 2100
-        const int channel_min = CHANNEL_MIN;
-        const int channel_max = CHANNEL_MAX;
+    // 映射函数：将角度差值映射到CRSF通道值范围（用于ROLL和PITCH）
+    auto map_angle_to_crsf = [](float angle_diff, float range) -> uint32_t {
+        // 计算角度范围：-range/2 ~ +range/2
+        const float angle_min = -range / 2.0f;
+        const float angle_max = range / 2.0f;
 
-        // 限制角度在有效范围内
-        if (angle < angle_min) angle = angle_min;
-        if (angle > angle_max) angle = angle_max;
+        // CRSF通道值范围
+        const uint32_t crsf_min = CRSF_CHANNEL_VALUE_MIN;
+        const uint32_t crsf_max = CRSF_CHANNEL_VALUE_MAX;
 
-        // 线性映射
-        float normalized = (angle - angle_min) / (angle_max - angle_min);
-        int channel_value = channel_min + (int)((channel_max - channel_min) * normalized);
+        // 限制角度差值在有效范围内
+        if (angle_diff < angle_min) angle_diff = angle_min;
+        if (angle_diff > angle_max) angle_diff = angle_max;
 
-        return channel_value;
+        // 线性映射到CRSF范围
+        float normalized = (angle_diff - angle_min) / (angle_max - angle_min);
+        uint32_t crsf_value = crsf_min + (uint32_t)((crsf_max - crsf_min) * normalized);
+
+        return crsf_value;
     };
 
-    // 更新RC通道
-    RC_CHANNEL[0] = map_angle_to_channel(roll_val);   // 横滚
-    RC_CHANNEL[1] = map_angle_to_channel(pitch_val);  // 俯仰
-    RC_CHANNEL[3] = map_angle_to_channel(yaw_val);    // 偏航
+    // YAW轴特殊映射函数（考虑圆形角度0-360°）
+    auto map_yaw_to_crsf = [](float yaw_angle, float mid_angle, float range) -> uint32_t {
+        // YAW轴是圆形角度，需要特殊处理
+        // 计算与mid_angle的角度差值（考虑圆形角度）
+        float angle_diff = yaw_angle - mid_angle;
 
-    // 其他通道保持最低值(900)
-    RC_CHANNEL[2] = CHANNEL_MIN;  // Throttle
-    RC_CHANNEL[4] = CHANNEL_MIN;  // AUX1
-    RC_CHANNEL[5] = CHANNEL_MIN;  // AUX2
-    RC_CHANNEL[6] = CHANNEL_MIN;  // AUX3
-    RC_CHANNEL[7] = CHANNEL_MIN;  // AUX4
-    RC_CHANNEL[8] = CHANNEL_MIN;  // AUX5
-    RC_CHANNEL[9] = CHANNEL_MIN;  // AUX6
+        // 将角度差值归一化到-180°到180°范围
+        while (angle_diff > 180.0f) angle_diff -= 360.0f;
+        while (angle_diff < -180.0f) angle_diff += 360.0f;
+
+        // 对于YAW轴，range表示检测范围的一半
+        // 例如：range=90时，检测范围是mid_angle ±45°
+        const float angle_min = -range / 2.0f;
+        const float angle_max = range / 2.0f;
+
+        // CRSF通道值范围
+        const uint32_t crsf_min = CRSF_CHANNEL_VALUE_MIN;
+        const uint32_t crsf_max = CRSF_CHANNEL_VALUE_MAX;
+
+        // 限制角度差值在有效范围内
+        if (angle_diff < angle_min) angle_diff = angle_min;
+        if (angle_diff > angle_max) angle_diff = angle_max;
+
+        // 线性映射到CRSF范围
+        float normalized = (angle_diff - angle_min) / (angle_max - angle_min);
+        uint32_t crsf_value = crsf_min + (uint32_t)((crsf_max - crsf_min) * normalized);
+
+        return crsf_value;
+    };
+
+    // 计算角度差值并映射到ChannelData
+    ChannelData[0] = map_angle_to_crsf(roll_val - ROLL_MID, ROLL_RANGE);   // 横滚
+    ChannelData[1] = map_angle_to_crsf(pitch_val - PITCH_MID, PITCH_RANGE); // 俯仰
+    ChannelData[3] = map_yaw_to_crsf(yaw_val, YAW_MID, YAW_RANGE);          // 偏航（特殊处理）
+
+    ChannelData[4] = CRSF_CHANNEL_VALUE_MIN;
+
+    // 其他通道保持中间值(CRSF_CHANNEL_VALUE_MID)
+    for (int i = 0; i < CRSF_NUM_CHANNELS; i++) {
+        if (i != 0 && i != 1 && i != 3 && i != 4) {
+            ChannelData[i] = CRSF_CHANNEL_VALUE_MID;
+        }
+    }
 }
 
 void rc_gyro_fast_update() {

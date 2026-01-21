@@ -3,8 +3,6 @@
 
 #include <Arduino.h>
 
-extern int RC_CHANNEL[10];
-
 // 引脚定义
 #define ACCGYRO_SCL 4
 #define ACCGYRO_SDA 5
@@ -15,6 +13,10 @@ extern int RC_CHANNEL[10];
 #define PITCH_RANGE 90
 #define ROLL_RANGE 90
 #define YAW_RANGE 90
+
+#define PITCH_MID 0
+#define ROLL_MID 0
+#define YAW_MID 0
 
 
 // 通道值范围定义
