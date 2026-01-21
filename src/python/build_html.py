@@ -75,6 +75,7 @@ def build_common(env, mainfile, isTX):
             build_html("hardware.js", "HARDWARE_JS", out, env)
             build_html("cw.html", "CW_HTML", out, env)
             build_html("cw.js", "CW_JS", out, env)
+            build_html("GyroCTRL.html", "GYROCTRL_HTML", out, env)
             build_html("lr1121.html", "LR1121_HTML", out, env)
             build_html("lr1121.js", "LR1121_JS", out, env)
 

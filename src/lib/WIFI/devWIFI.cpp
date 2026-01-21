@@ -42,6 +42,7 @@
 #include "helpers.h"
 #include "devVTXSPI.h"
 #include "devButton.h"
+#include "RC.h"
 
 #include "WebContent.h"
 
@@ -160,6 +161,7 @@ static struct {
   {"/hardware.js", "text/javascript", (uint8_t *)HARDWARE_JS, sizeof(HARDWARE_JS)},
   {"/cw.html", "text/html", (uint8_t *)CW_HTML, sizeof(CW_HTML)},
   {"/cw.js", "text/javascript", (uint8_t *)CW_JS, sizeof(CW_JS)},
+  {"/GyroCTRL.html", "text/html", (uint8_t *)GYROCTRL_HTML, sizeof(GYROCTRL_HTML)},
 #if defined(RADIO_LR1121)
   {"/lr1121.html", "text/html", (uint8_t *)LR1121_HTML, sizeof(LR1121_HTML)},
   {"/lr1121.js", "text/javascript", (uint8_t *)LR1121_JS, sizeof(LR1121_JS)},
@@ -1086,6 +1088,16 @@ static void startServices()
   server.on("/cw.html", WebUpdateSendContent);
   server.on("/cw.js", WebUpdateSendContent);
   server.on("/cw", HandleContinuousWave);
+  server.on("/GyroCTRL.html", WebUpdateSendContent);
+  server.on("/gyro.json", HTTP_GET, [](AsyncWebServerRequest *request) {
+    float rollDeg = 0.0f, pitchDeg = 0.0f, yawDeg = 0.0f;
+    rc_gyro_get_angles(rollDeg, pitchDeg, yawDeg);
+    // keep payload small and easy to parse
+    String s = String("{\"roll\":") + String(rollDeg, 2) +
+               ",\"pitch\":" + String(pitchDeg, 2) +
+               ",\"yaw\":" + String(yawDeg, 2) + "}";
+    request->send(200, "application/json", s);
+  });
 
   DefaultHeaders::Instance().addHeader("Access-Control-Allow-Origin", "*");
   DefaultHeaders::Instance().addHeader("Access-Control-Max-Age", "600");

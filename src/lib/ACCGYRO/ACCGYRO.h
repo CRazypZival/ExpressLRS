@@ -12,6 +12,7 @@ class ACCGYRO {
 public:
     ACCGYRO();
     void begin();  // 初始化 I2C 和 MPU6050
+    void setAlign(int alignDeg); // 设置陀螺仪对齐角度 (0, 90, 180, 270)
     void read();   // 读取一次数据并通过 DBG() 打印
     void posture(); //根据读取到的传感器数据进行计算姿态
     void posture_print();
@@ -28,8 +29,10 @@ private:
     float m_rollDeg = 0.0f;
     float m_pitchDeg = 0.0f;
     float m_yawDeg = 0.0f;
+    int m_alignDeg = 0; // 对齐角度 (0, 90, 180, 270)
     static constexpr float GYRO_SENS_500DPS = 65.5f; // LSB/deg/s for 500 dps full scale
     static constexpr float COMPLEMENTARY_ALPHA = 0.98f;
+    static constexpr float YAW_OFFSET_LSB = 165.0f; // YAW轴偏移补偿，基于调试数据计算得出
 };
 
 #endif

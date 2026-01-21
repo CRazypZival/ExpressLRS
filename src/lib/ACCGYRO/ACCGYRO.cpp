@@ -3,6 +3,17 @@
 
 ACCGYRO::ACCGYRO() : mpu(MPU6050_DEFAULT_ADDRESS, &Wire1) {
     m_prevMicros = micros();
+    m_alignDeg = 0; // 默认对齐角度为0度
+}
+
+void ACCGYRO::setAlign(int alignDeg) {
+    // 只接受0, 90, 180, 270度
+    if (alignDeg == 0 || alignDeg == 90 || alignDeg == 180 || alignDeg == 270) {
+        m_alignDeg = alignDeg;
+        DBGLN("ACCGYRO align set to: %d degrees", m_alignDeg);
+    } else {
+        DBGLN("ACCGYRO align: invalid angle %d, keeping current %d", alignDeg, m_alignDeg);
+    }
 }
 
 void ACCGYRO::begin() {
@@ -24,6 +35,42 @@ void ACCGYRO::begin() {
 
 void ACCGYRO::read() {
     mpu.getMotion6(&m_ax, &m_ay, &m_az, &m_gx, &m_gy, &m_gz);
+
+    // 根据对齐角度进行坐标变换
+    if (m_alignDeg != 0) {
+        int16_t ax_temp = m_ax, ay_temp = m_ay, az_temp = m_az;
+        int16_t gx_temp = m_gx, gy_temp = m_gy, gz_temp = m_gz;
+
+        switch (m_alignDeg) {
+            case 90:  // 顺时针旋转90度: X=Y, Y=-X, Z=Z
+                m_ax = ay_temp;
+                m_ay = -ax_temp;
+                m_az = az_temp;
+                m_gx = gy_temp;
+                m_gy = -gx_temp;
+                m_gz = gz_temp;
+                break;
+            case 180:  // 旋转180度: X=-X, Y=-Y, Z=Z
+                m_ax = -ax_temp;
+                m_ay = -ay_temp;
+                m_az = az_temp;
+                m_gx = -gx_temp;
+                m_gy = -gy_temp;
+                m_gz = gz_temp;
+                break;
+            case 270:  // 逆时针旋转90度: X=-Y, Y=X, Z=Z
+                m_ax = -ay_temp;
+                m_ay = ax_temp;
+                m_az = az_temp;
+                m_gx = -gy_temp;
+                m_gy = gx_temp;
+                m_gz = gz_temp;
+                break;
+            default:  // 0度或其他无效值，无变换
+                break;
+        }
+    }
+
     m_hasReading = true;
 }
 
@@ -40,10 +87,10 @@ void ACCGYRO::posture() {
     }
     m_prevMicros = now;
 
-    // 将陀螺仪原始值转换为角速度（deg/s）
+    // 将陀螺仪原始值转换为角速度（deg/s），并对YAW轴进行偏移补偿
     float gxDeg = static_cast<float>(m_gx) / GYRO_SENS_500DPS;
     float gyDeg = static_cast<float>(m_gy) / GYRO_SENS_500DPS;
-    float gzDeg = static_cast<float>(m_gz) / GYRO_SENS_500DPS;
+    float gzDeg = static_cast<float>(m_gz - YAW_OFFSET_LSB) / GYRO_SENS_500DPS;
 
     // 积分陀螺仪角度
     m_rollDeg += gxDeg * dt;
@@ -63,11 +110,11 @@ void ACCGYRO::posture() {
     if (m_rollDeg > 180.0f) m_rollDeg -= 360.0f;
     if (m_rollDeg < -180.0f) m_rollDeg += 360.0f;
 
-    // 偏航角包络到 [-180, 180]
-    if (m_yawDeg > 180.0f || m_yawDeg < -180.0f) {
-        m_yawDeg = fmodf(m_yawDeg + 180.0f, 360.0f);
-        if (m_yawDeg < 0) m_yawDeg += 360.0f;
-        m_yawDeg -= 180.0f;
+    // 偏航角包络到 [0, 360]
+    if (m_yawDeg >= 360.0f) {
+        m_yawDeg = fmodf(m_yawDeg, 360.0f);
+    } else if (m_yawDeg < 0.0f) {
+        m_yawDeg = fmodf(m_yawDeg, 360.0f) + 360.0f;
     }
 }
 

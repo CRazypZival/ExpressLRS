@@ -17,6 +17,7 @@ int RC_CHANNEL[10] = {1500, 1500, 900, 1500, 1500, 1500, 1500, 1500, 1500, 1500}
 
 void rc_init() {
     accgyro.begin();
+    accgyro.setAlign(ACCGYRO_YAW_ALIGN); // 设置陀螺仪对齐角度
 }
 
 void channel_update() {
@@ -74,3 +75,9 @@ void rc_gyro_slow_update(uint32_t nowMs) {
     }
 }
 
+void rc_gyro_get_angles(float &rollDeg, float &pitchDeg, float &yawDeg)
+{
+    rollDeg = accgyro.roll();
+    pitchDeg = accgyro.pitch();
+    yawDeg = accgyro.yaw();
+}

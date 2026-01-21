@@ -1,0 +1,67 @@
+<!doctype html>
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Gyro</title>
+    <style>
+      html, body {
+        height: 100%;
+        margin: 0;
+        font-family: Arial, Helvetica, sans-serif;
+        background: #fff;
+        color: #111;
+      }
+      .wrap {
+        height: 100%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+      }
+      .panel {
+        text-align: center;
+        font-size: 28px;
+        line-height: 1.8;
+        font-variant-numeric: tabular-nums;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="wrap">
+      <div class="panel">
+        <div id="pitch">Pitch: --</div>
+        <div id="roll">Roll: --</div>
+        <div id="yaw">YAW: --</div>
+      </div>
+    </div>
+    <script>
+      const elPitch = document.getElementById('pitch');
+      const elRoll = document.getElementById('roll');
+      const elYaw = document.getElementById('yaw');
+
+      function fmt(v) {
+        if (typeof v !== 'number' || !isFinite(v)) return '--';
+        return v.toFixed(1);
+      }
+
+      async function tick() {
+        try {
+          const r = await fetch('/gyro.json', { cache: 'no-store' });
+          if (!r.ok) throw new Error('http ' + r.status);
+          const j = await r.json();
+          elPitch.textContent = 'Pitch: ' + fmt(j.pitch);
+          elRoll.textContent = 'Roll: ' + fmt(j.roll);
+          elYaw.textContent = 'YAW: ' + fmt(j.yaw);
+        } catch (e) {
+          elPitch.textContent = 'Pitch: --';
+          elRoll.textContent = 'Roll: --';
+          elYaw.textContent = 'YAW: --';
+        }
+      }
+
+      tick();
+      setInterval(tick, 200);
+    </script>
+  </body>
+</html>
+
