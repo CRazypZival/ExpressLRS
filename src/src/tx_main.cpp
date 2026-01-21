@@ -24,6 +24,8 @@
 #include "devPDET.h"
 #include "devBackpack.h"
 
+#include "RC.h"
+
 #include "MAVLink.h"
 
 #if defined(PLATFORM_ESP32_S3) || defined(PLATFORM_ESP32_C3)
@@ -68,7 +70,8 @@ volatile uint8_t syncSpamCounter = 0;
 volatile uint8_t syncSpamCounterAfterRateChange = 0;
 uint32_t rfModeLastChangedMS = 0;
 uint32_t SyncPacketLastSent = 0;
-static enum { stbIdle, stbRequested, stbBoosting } syncTelemBoostState = stbIdle;
+enum SyncTelemBoostState { stbIdle, stbRequested, stbBoosting };
+static SyncTelemBoostState syncTelemBoostState = stbIdle;
 ////////////////////////////////////////////////
 
 volatile uint32_t LastTLMpacketRecvMillis = 0;
@@ -1416,6 +1419,7 @@ void setup()
     devicesRegister(ui_devices, ARRAY_SIZE(ui_devices));
     // Initialise the devices
     devicesInit();
+    rc_init();
     DBGLN("Initialised devices");
 
     setupBindingFromConfig();
@@ -1496,6 +1500,11 @@ void setup()
 void loop()
 {
   uint32_t now = millis();
+
+  // IMU 实时任务
+  rc_gyro_fast_update();
+  // 姿态打印（250ms）
+  rc_gyro_slow_update(now);
 
   HandleUARTout(); // Only used for non-CRSF output
 
